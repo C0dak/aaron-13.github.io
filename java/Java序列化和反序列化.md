@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: java
 title: Java序列化和反序列化
 ---
 1. 1.序列化与反序列化
