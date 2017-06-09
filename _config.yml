@@ -8,7 +8,7 @@ url: http://aaron-13.github.io
 #url: http://localhost:4000
 
 # For a project page here should be a project name. Otherwise (for user's/organizaion's page leave it empty)
-baseurl: '/jekyll-clean-dark'
+baseurl: ""
 
 avatar: https://raw.githubusercontent.com/aaron-13/aaron-13.github.io/master/images/linux.jpg
 
