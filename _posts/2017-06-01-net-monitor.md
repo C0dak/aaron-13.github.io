@@ -71,28 +71,25 @@ iostat [-c][-d][-h][-N][-k][-x][-z][interval [count]]
 
 ![iostat](https://aaron-13.github.io/images/iostat-01.png)
 
-<pre><code>iostat -d -k 2</code></pre>
+`iostat -d -k 2`
 ![iostat-02](https://aaron-13.github.io/images/iostat-02.png)
 
 参数-d表示，显示设备(磁盘)使用状态；-k某些使用block为单位的列强制使用kilobytes为单位;2表示，数据每隔2秒刷新一次
 
 输出的信息：
-<pre>
-<code>
+
 	tps:该设备每秒的传输次数(transfer per second)。"一次传输"即一次I/O请求。多个逻辑请求可能被合并为"一次I/O请求"
 	kB_read/s：每秒从设备读取的数据量
 	kB_wrtn/s：每秒从设备写入的数据量
 	kB_read:   读取的数据总量		
 	kB_wrtn：  写入的数据总量
-</code>
-</pre>
+
 
 因为是瞬间值，总TPS并不严格等于各个分区TPS的总和
 
 iostat还有一个比较常用的选项-x，该选项用于显示和io相关的扩展数据
 ![iostat-03](https://aaron-13.github.io/images/iostat-03.png)
-<pre>
-<code>
+
 	rrqm/s:每秒这个设备相关的读取请求有多少被Merge了(当系统调用需要读取数据的时候，VFS将请求发到各个FS，如果FS发现不同的读取请求读取相同block的数据，FS会将这个请求合并Merge)
 	wrqm/s:每秒这个设备相关的写入请求有多少被Merge了
 	rsec/s:每秒读取的扇区数
@@ -104,8 +101,7 @@ iostat还有一个比较常用的选项-x，该选项用于显示和io相关的�
 	await: 每个IO请求的处理的平均时间(单位微秒毫秒)，可以理解为IO的响应时间，系统IO响应时间应该低于5ms，如果大于10ms就比较大了
 	svctm: 平均每次设备I/O操作的服务时间(毫秒时间)。如果svctm和await的值很接近，表示几乎没有I/O等待，磁盘性能很好，如果await的值远高于svctm的值，则表示I/O队列等待太长，系统上运行的应用程序将变慢
 	%util: 在统计时间内所有处理I/O时间，除以总共统计时间。如果统计间隔1秒，该设备有0.8秒在处理IO，而0.2秒闲置，那么该设备的%util = 0.8/1 = 80%。如果是多设备，即使%util是100%，因为磁盘的并发能力，所以磁盘的并发能力，所以磁盘使用未必到瓶颈
-</code>
-</pre>
+
 
 iostat还可以用来获取cpu部分的状态值:
 ![iostat-04](https://aaron-13.github.io/images/iostat-04.png)
@@ -119,24 +115,24 @@ iotop命令是用来监视磁盘I/O使用状况的top类工具。它以表的形
 `iotop`
 ![iotop](https://aaron-13.github.io/images/iotop-01.png)
 **选项**
-<pre><code>
+
 	-o: 只显示有io操作的进程
 	-b: 批量显示，无交互，主要用作记录到文件
 	-n NUM: 显示NUM次，主要用于非交互操作
 	-d SEC: 间隔sec秒显示一次
 	-p PID: 监控的进程pid
 	-u USER: 监控的进程用户
-</code></pre>
+
 
 **常用快捷键**
-<pre><code>
+
 - 左右箭头: 改变排序方式，默认是按IO排序
 - r: 改变排序顺序
 - o: 只显示有IO输出的进程
 - p: 进程/线程的显示方式切换
 - a: 显示累积使用量
 - q: 退出	
-</code></pre>
+
 
 
 ### iftop
@@ -144,7 +140,7 @@ iotop命令是用来监视磁盘I/O使用状况的top类工具。它以表的形
 ![iftop](https://aaron-13.github.io/images/iftop-01.png)
 
 **界面说明**
-<pre><code>
+
 	<= =>: 表示流量的方向
 	TX: 发送流量
 	RX: 接收流量
@@ -152,10 +148,10 @@ iotop命令是用来监视磁盘I/O使用状况的top类工具。它以表的形
 	Cumm: 运行iftop到目前的总流量
 	peak: 流量峰值
 	rates: 分别表示2s 10s 40s的平均流量
-</code></pre>
+
 
 **相关参数说明**
-<pre><code>
+
 	-i: 设定检测的网卡
 	-B: 以bytes为单位显示流量(默认为bits)
 	-n: 使host信息默认直接都显示IP
@@ -166,6 +162,6 @@ iotop命令是用来监视磁盘I/O使用状况的top类工具。它以表的形
 	-P: 显示端口信息
 	-f: 过滤计算包
 	-m: 设置界面最上边的刻度的最大值，刻度分五个大段显示
-</code></pre>
+
 
 
