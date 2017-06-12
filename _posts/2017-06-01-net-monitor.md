@@ -72,6 +72,7 @@ iostat [-c][-d][-h][-N][-k][-x][-z][interval [count]]
 ![iostat](https://aaron-13.github.io/images/iostat-01.png)
 
 `iostat -d -k 2`
+
 ![iostat-02](https://aaron-13.github.io/images/iostat-02.png)
 
 参数-d表示，显示设备(磁盘)使用状态；-k某些使用block为单位的列强制使用kilobytes为单位;2表示，数据每隔2秒刷新一次
