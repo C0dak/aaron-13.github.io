@@ -19,7 +19,6 @@ $4="errmsg"并不是想要的token，修改为
 
 ------
 <pre><code>
-```shell
 #!/bin/bash
 
 GURL="https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=XXXXXXXXXXXXXXXXXX&corpsecret=XXXXXXXXXXXXXXXXXXXXXXXXXXX"
@@ -45,5 +44,4 @@ function body() {
 }
 /usr/bin/curl --data-ascii "$(body $1 $2 $3)" $PURL
 
-```
 </code></pre>
