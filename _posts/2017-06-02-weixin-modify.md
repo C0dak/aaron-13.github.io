@@ -18,7 +18,7 @@ $4="errmsg"并不是想要的token，修改为
 还好其他不要怎么变动。虽然其中还走了一些弯路，都是自己挖的坑。
 
 ------
-<pre><code>
+
 ```Shell
 #!/bin/bash
 
@@ -45,4 +45,3 @@ function body() {
 }
 /usr/bin/curl --data-ascii "$(body $1 $2 $3)" $PURL
 ```
-</code></pre>
