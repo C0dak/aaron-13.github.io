@@ -19,7 +19,7 @@ $4="errmsg"并不是想要的token，修改为
 
 ------
 
-```Shell
+```
 #!/bin/bash
 
 GURL="https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=XXXXXXXXXXXXXXXXXX&corpsecret=XXXXXXXXXXXXXXXXXXXXXXXXXXX"
