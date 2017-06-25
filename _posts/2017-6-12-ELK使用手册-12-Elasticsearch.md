@@ -274,4 +274,136 @@ curl -s -XPUT localhost:9200/_cluster/settings -d '{
 ```
 
 1.热索引分片不均，默认情况下，ES集群的数据均衡策略是以各节点的分片总数(indices_all_active)作为基准的。这对于搜索服务来说无疑是均衡搜索压力提高性能的好方法。
-但对于Elastic Stack场景，一般压力集中在新索引的数据写入方面。正常运行的时候，也没有问题，但是当集群扩容的时候，新加入
+但对于Elastic Stack场景，一般压力集中在新索引的数据写入方面。正常运行的时候，也没有问题，但是当集群扩容的时候，新加入集群的节点，分片总数远远低于其他节点。这时候如果有新索引创建，ES的默认策略会导致新索引的所有主分片几乎全分配在这台新节点上，整个集群的写入压力都在这个加点上，可能会导致集群异常。先预先计算好索引的分片数后，配置好点节点分片的限额，比如，一个5节点的集群，索引主分片10个，副本1分，则平均每个即诶的那应该有4个分片：
+
+```
+curl -s -XPUT http://127.0.0.1:9200/logstash-2017-06-12/_settings -d '{
+    "index" : {"routing.allocation.total_shards_per_node":"5"}
+}'
+
+配置为5，是为了防止分片发生迁移。
+Elasticsearch有一系列参数相互影响，最终联合决定分片分配:
+
++ cluster.routing.allocation.balance.shard节点上分配分片的权重，默认0.45s
+
++ cluster.routing.allocation.balance.index每个索引往单个节点上分配分片的权重，默认为0.55，数据越大，往索引层面均衡分片
+
++ chuster.routing.allocation.balance.threshold大于阀值则均衡操作，默认为1
+
+Elasticsearch中的计算方法:
+
+`(indexBalance(node.numShards(index) - avgShardsPerNode(index)) + shardBalance(node.numShards() - avgShardsPerNode)) <=> weightthreshold`
+
+所以，也可以采取加大`cluster.routing.allocation.balance.index` 甚至设置`cluster.routing.allocation.balance.shard`为0来尽量采用索引内的节点均衡
+
+
+
+## reroute接口
+
+在必要时候，还可以通过ES的reroute接口，手动完成对分片的分配选择的控制。
+
+reroute接口支持五种指令: `allocate_replica`,`allocate_stale_primary`,`allocate_empty_primary`.`move`和`cancel`。常用的一般情况是allocte和move
+
++ allocate_* 指令
+因为负载过高等原因，有时候个别分片可能出于UNASSIGNED状态，就可以手动分配分片到指定节点上，默认情况下，只允许手动分配副本分片(使用allocate_replica)，所以如果要分配主分片，需要单独加上一个`accept_data_loss`选项:
+
+```
+curl -XPOST 127.0.0.1:9200/_cluster/reroute -d '{
+    "commands" : [ {
+        "allocate_stale_primary: 
+        {
+            "index": "logstash-2017-06-12","shard": 61,"node": "192.168.1.1","accept_data_loss":true
+        }
+    }]
+}'
+```
+
++ move指令
+因为负载过高等原因，磁盘利用率过高，服务器下线，更换磁盘等，可能会需要从节点上移走部分分片：
+
+```
+curl -XPOST 127.0.0.1:9200/_cluster/reroute -d '{
+    "commands" : [{
+        "move":
+        {
+            "index": "logstash-2017-06-12","shard":0,"from_node":"192.168.1.1","to_node":"192.168.1.2"
+        }
+    }]
+}'
+```
+
+
+## 节点下线
+
+```
+curl -XPUT 127.0.0.1:9200/_cluster/settings -d '{
+    "transient" : {
+        "cluster.routing.allocation.exclude._ip": "192.168.1.1"
+    }
+}'
+```
+
+ES会自动吧这个IP上的所有分片，都自动转移到其他节点上，等到转移完成，这个节点就下线了
+
+
+
+## 冷热数据的读写分离
+
+仿照MySQL集群一样，做读写分离
+
+**实施方案**
+
+1. N台机器做热数据的存储，上面只放当天数据，这N台热数据节点上面的elasticsearch yml中配置node.tag: hot
+
+2. 之前的数据放在另外的M台机器上，在M台冷数据节点中配置`node.tag: stale`
+
+3. 模板中控制对新建索引添加hot标签:
+```
+{   
+    "order": 0,
+    "template": "*"
+    "settings": {
+        "index.routing.allocation.require.tag": "hot"
+    }
+}
+```
+
+4. 每天任务计划更新索引的配置，将tag改为false，所以会自动迁移到M台冷数据节点
+```
+# curl -XPUT 127.0.0.1:9200/indexname/_settings -d '{
+    "index": {
+        "allocation": {
+            "require": {
+                "tag": "stale"
+            }
+        }
+    }
+}'
+```
+
+该方案运用的，是Elasticsearch中的allocation filter功能，[说明](https://www.elastic.co/guide/en/elasticsearch/reference/master/shard-allocation-filtering.html)
+
+
+
+## 集群自动发现
+
+ES是一个P2P类型(使用gossip协议)的分布式系统，在2.0之前，所有配置了相同`cluster.name`的节点自动归属到一个集群中
+
+
+### unicast方式
+ES从2.0开始，默认的自动发现方式改为单播(unicast)方式，配置里提供几台节点的地址，ES将其视作gossip router角色，借以完成集群的发现。采用单播方式的集群，各节点都配置相同的几个节点列表作为router即可。
+
+```
+network.host "192.168.1.1"
+discovery.zen.minimum_master_nodes: 3
+discovery.zen.ping_timeout: 100s 参数仅在加入或者选举master主节点的时候才起作用
+discovery.zen.fd.ping_timeout: 100s 参数则在稳定运行的集群中个噢能，master检测所有键点，以及节点检测master是否畅通长期有用
+discovery.zen.ping.unicast.hosts: ["10.0.1.1","10.0.1.2","10.0.1.3"]
+```
+
+上面的fd是faultdetection的缩写
+既然长期有用，自然还有运行间隔和重试的配置，也可以根据实际情况配置
+```
+discovery.zen.fd.ping_interval: 10s
+discovery.zen.fd.ping_retries: 10
+```
