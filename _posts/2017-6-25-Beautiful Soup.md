@@ -364,7 +364,7 @@ soup.find_all('a')
 
 tag的`.contents`属性可以将tag的子节点以列表的方式输出:
 
-![soup-15.png](https://aaron-15.github.io/images/soup-15.png)
+![soup-15.png](https://aaron-13.github.io/images/soup-15.png)
 
-![soup-16.png](https://aaron-16.github.io/images/soup-16.png)
+![soup-16.png](https://aaron-13.github.io/images/soup-16.png)
 
