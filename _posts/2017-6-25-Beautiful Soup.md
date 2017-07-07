@@ -299,8 +299,7 @@ BeautifulSoup中定义的其他类型都可能会出现在XML的文档中：`CDa
 ## 遍历文档树
 
 ```
-html_doc = """
-<html><head><title>The Dormouse's story</title><li>loop</li>></head>
+html_doc = """<html><head><title>The Dormouse's story</title><li>loop</li></head>
     <body>
 <p class="title"><b>The Dormouse's story</b></p>
 
@@ -364,7 +363,379 @@ soup.find_all('a')
 
 tag的`.contents`属性可以将tag的子节点以列表的方式输出:
 
-![soup-15.png](https://aaron-13.github.io/images/soup-15.png)
-
 ![soup-16.png](https://aaron-13.github.io/images/soup-16.png)
+
+BeautifulSoup对象本身一定会包含子节点，也就是说<html>标签也是BeautifulSoup对象的子节点：
+
+![soup-17.png](https://aaron-13.github.io/images/soup-17.png)
+
+字符串没有`.contents`属性，因为字符串没有子节点：
+
+通过tag的`.children`生成器，可以对tag的子节点进行循环：
+
+```
+for child in title_tag.children
+	print(child)
+# the dormouse's story
+
+```
+
+**.descendants**
+
+`.contents`和`.children`属于仅包含tag的直接子节点，例如，<head>标签只有一个直接子节点<title>
+
+```
+head.contents
+# <title>The Dormousee's story</title>
+```
+
+但是<title>标签也包含一个子节点：字符串"The Dormouse's story"，这种情况下字符串也属于<head>标签的子孙节点。`.descendants`属于可以对所有tag的子孙节点进行递归：
+
+![soup-18.png](https://aaron-13.github.io/images/soup-18.png)
+
+
+**.string**
+
+如果tag只有一个`NavigableString`类型子节点，那么这个tag可以使用`.strirng`得到子节点
+
+```
+title.string
+# The Dormouse's story
+```
+
+如果一个tag仅有一个子节点，那么这个tag也可以使用.string方法，输出结果与当前唯一子节点的.string结果相同
+
+```
+title.contents
+# <title>The Dormouse's story</title>
+
+title.string
+# The Dormouse's story
+
+```
+
+如果tag包含了多个子节点，tag就无法确定.string方法应该调用哪个子节点的内容，输出结果为`None`
+
+
+**.strings和stripped_strings**
+
+如果tag中包含多个字符串，可以使用.strings来循环获取：
+
+```python
+
+for string in soup.strings:
+    print(repr(string))
+    # u"The Dormouse's story"
+    # u'\n\n'
+    # u"The Dormouse's story"
+    # u'\n\n'
+    # u'Once upon a time there were three little sisters; and their names were\n'
+    # u'Elsie'
+    # u',\n'
+    # u'Lacie'
+    # u' and\n'
+    # u'Tillie'
+    # u';\nand they lived at the bottom of a well.'
+    # u'\n\n'
+    # u'...'
+    # u'\n'
+```
+
+输出的字符串中可能包含很多空格或空行，使用`stripped_strings`可以去除多余空白内容
+
+```
+for string in soup.stripped_strings:
+    print(repr(string))
+    # u"The Dormouse's story"
+    # u"The Dormouse's story"
+    # u'Once upon a time there were three little sisters; and their names were'
+    # u'Elsie'
+    # u','
+    # u'Lacie'
+    # u'and'
+    # u'Tillie'
+    # u';\nand they lived at the bottom of a well.'
+    # u'...'
+```
+全部是空格的行会被忽略掉，段首和段末的空白会被删除
+
+
+## 父节点
+
+每个tag或字符串都有父节点：被包含在某个tag中
+
+
+**.parent**
+通过.parent属性来获取某个元素的父节点
+
+```
+title = soup.title
+title
+# <title>The Dormouse's story</title>
+title.parent
+# <head><title>The Dormouse's story</title></head>
+```
+
+文档title的字符串也有父节点：<title>标签
+
+```
+title.string.parent
+# <title>The Dormouse's story</title>
+```
+
+文档的顶层节点比如<html>的父节点是BeautifulSoup对象：
+
+```
+html = soup.html
+type(html)
+# <class 'bs4.BeautifulSoup'>
+```
+
+BeautifulSoup对象的.parent是`None`
+
+
+**.parents**
+
+通过元素的.parents属性可以递归得到元素的所有父节点，使用.parents遍历<a>标签到根节点的所有节点
+
+![soup-19.png](https://aaron-13.github.io/images/soup-19.png)
+
+
+## 兄弟节点
+
+```
+sibling_soup = BeautifulSoup("<a><b>text1</b><c>text2</c></b></a>")
+print(sibling_soup.prettify())
+# <html>
+#  <body>
+#   <a>
+#    <b>
+#     text1
+#    </b>
+#    <c>
+#     text2
+#    </c>
+#   </a>
+#  </body>
+# </html>
+```
+
+因为<b>和<c>标签是同一层，他们是同一个元素的子节点，，可以被称为兄弟节点。一段文档以标准格式输出时，兄弟节点有相同的缩进级别，在代码中也可以使用这种关系
+
+**.netx_sibling和.previous_sibling**
+
+在文档中，使用`.next_sibling`和`.previous_sibling`属性来查询兄弟节点
+
+通过这两个属性可以对当前节点迭代输出：
+
+```
+for sibling in soup.a.next_siblings:
+    print(repr(sibling))
+    # u',\n'
+    # <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>
+    # u' and\n'
+    # <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>
+    # u'; and they lived at the bottom of a well.'
+    # None
+
+for sibling in soup.find(id="link3").previous_siblings:
+    print(repr(sibling))
+    # ' and\n'
+    # <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>
+    # u',\n'
+    # <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>
+    # u'Once upon a time there were three little sisters; and their names were\n'
+    # None
+```
+
+
+## 回退和前进
+
+```
+<html><head><title>The Dormouse's story</title></head>
+<p class="title"><b>The Dormouse's story</b></p>
+```
+
+**.netx_element和.previous_element**
+
+`.netx_element`属性指向解析过程中下一个被解析的对象(字符串或tag),结果可能与`.next_element`相同，但通常不一样。
+
+它的`.next_element`结果是一个字符串，因为当前的解析过程因为遇到<a>标签而中断了
+```
+last_a_tag = soup.find("a", id="link3")
+last_a_tag
+# <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>
+
+last_a_tag.next_sibling
+# '; and they lived at the bottom of a well.'
+```
+
+但是这个<a>标签的`.next_element`属性结果是在<a>标签被解析之后的解析内容，不是<a>标签后的句子部分，应该是字符串"Tillie":
+
+```
+last_a_tag.next_element
+# u'Tillie'
+```
+
+这是因为在原始文档中，字符串"Tillie"在分号前出现，解析器先进入<a>标签，然后是字符串"Tillie"，然后关闭</a>标签，然后是分号和剩余部分。分号与<a>标签在统一层级，但是字符串"Tillie"会被先解析
+
+
+
+## 搜索文档树
+
+BeautifulSoup定义了很多搜索方法，这里着重介绍2个：find()和find_all()
+
+
+**过滤器**
+
+**字符串**
+
+最简单的过滤器是字符串，在搜索方法中传入一个字符串参数，BeautifulSoup会查找与字符串完整匹配的内容哦，下面的例子用于查找文档中所有的<b>标签：
+
+```
+soup.find_all('b')
+# [<b>The Dormouse's story</b>]
+```
+
+如果传入字节码参数，BeautifulSoup会当作UTF-8编码，可以传入一段Unicode编码来避免BeautifulSoup解析编码出错
+
+
+**正则表达式**
+
+如果传入正则表达式作为参数，BeautifulSoup会通过正则表达式的match()来匹配内容：
+
+![soup-20.png](https://aaron-13.github.io/images/soup-20.png)
+
+![soup-21.png](https://aaron-13.github.io/images/soup-21.png)
+
+
+## 列表
+
+如果传入列表参数，BeautifulSoup会将与列表中任一元素匹配的内容返回
+
+![soup-22.png](https://aaron-13.github.io/images/soup-22.png)
+
+
+**True**
+
+True可以配置任何值，查找所有的tag，但是不会返回字符串节点
+
+![soup-23.png](https://aaron-13.github.io/images/soup-23.png)
+
+
+## 方法
+
+如果没有合适的过滤器，那么还可以定义一个方法，方法只接受一个元素参数，如果这个方法返回True，表示当前元素匹配并且被找到，如果不是则返回False
+
+```
+def has_class_but_no_id(tag):
+	return tag.has_attr('class') and not tag.has_attr('id')
+```
+
+将这个方法作为参数传入find_all()方法，将得到所有<p>标签：
+```
+soup.find_all(has_class_but_no_id)
+```
+
+通过一个方法来过滤一类标签属性的时候，这个方法的参数是要被过滤的属性的值，而不是这个标签。
+
+找出href属性不符合指定正则的a标签
+
+![soup-24.png](https://aaron-13.github.io/images/soup-24.png)
+
+标签过滤方法可以使用复杂方法，下面例子可以过滤出前后都有文字的标签：
+
+![soup-25.png](https://aaron-13.github.io/images/soup-25.png)
+
+
+## find_all()
+
+**find_all(name,attrs,recursive,string,\*\*kwargs)**
+
+find_all()方法搜索当前tag的所有tag子节点，并判断是否符合过滤器的条件
+
+```
+soup.find_all("title")
+# [<title>The Dormouse's story</title>]
+
+soup.find_all("p", "title")
+# [<p class="title"><b>The Dormouse's story</b></p>]
+
+soup.find_all("a")
+# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
+#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
+#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
+
+soup.find_all(id="link2")
+# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>]
+
+import re
+soup.find(string=re.compile("sisters"))
+# u'Once upon a time there were three little sisters; and their names were\n'
+```
+
+**name参数**
+
+name参数可以查找所有名字为name的tag，字符串对象会被自动忽略掉
+简单用法：
+
+```
+soup.find_all("title")
+# [<title>The Dormouse's story</title>]
+```
+
+重申：搜索name参数的值可以使任一类型的过滤器，字符串，正则表达式，列表，方法或是True
+
+
+**keyword参数**
+
+如果一个指定名字的参数不是搜索内置的参数名，搜索时会把该参数当做指定名字tag的属性来搜索，如果包含一个名字为id的参数，BeautifulSoup会搜索每个tag的"id"属性：
+
+```
+soup.find_all(id="link2")
+# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>]
+```
+
+如果传入href参数，BeautifulSoup会搜索每个tag的"href"属性
+
+```
+soup.find_all(href=re.compile("elsie"))
+# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>]
+```
+
+搜索指定名字的属性时可以使用的参数值包括: 字符串,正则表达式，列表，True
+
+查找所有包含id属性的tag，无论id是什么值
+
+```
+soup.find_all(id=True)
+```
+
+使用多个指定名字的参数可以同时过滤tag的多个属性：
+
+```
+soup.find_all(href=re.compile("elsie"),id="link1")
+```
+
+有些tag属性在搜索不能使用，比如HTML5中的data-*属性：
+
+![soup-26.png](https://aaron-13.github.io/images/soup-26.png)
+
+但是可以通过find_all()方法的attrs参数定义一个字典参数来搜索包含特殊属性的tag：
+
+```
+data.find_all(attrs={"data-foo":"value"})
+# [<div data-foo="value">foo!</div>]
+```
+
+
+## 按CSS搜索
+
+按照CSS类名搜索tag的功能非常实用，但标识CSS类名的关键字class在Python中是保留字，实用class做参数会导致语法错误，从BeautifulSoup的4.1.1版本开始，可以通过class_参数搜索有指定CSS类名的tag:
+
+![soup-27.png](https://aaron-13.github.io/images/soup-27.png)
+
+
+
+
 
