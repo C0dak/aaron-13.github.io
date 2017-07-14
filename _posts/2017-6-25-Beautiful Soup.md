@@ -736,6 +736,995 @@ data.find_all(attrs={"data-foo":"value"})
 ![soup-27.png](https://aaron-13.github.io/images/soup-27.png)
 
 
+class_参数同样接受不同类型的过滤器，字符串，正则表达式，方法或True：
+
+```
+soup.find_all(class_=re.compile('itl'))
+# [<p class="title"><b>The Dormouse's story</b></p>]
+
+def fun(css_class):
+	return css_class is not None and len(css_class) == 6
+
+soup.find_all(class_=fun)
+# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
+#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
+#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
+```
+
+tag的class属性是多值属性，按照CSS类名搜索tag时，可以分别搜索tag中的每个CSS类名:
+
+```
+css_soup = BeautifulSoup('<p class="body strikeout"></p>')
+css_soup.find_all('p',class_="strikeout")
+# [<p class="body strikeout"></p>]
+
+css_soup.find_all('p',class_='body')
+# [<p class="body strikeout"></p>]
+
+```
+
+搜索class属性时也可以通过CSS值完全匹配：
+```
+css_soup.find_all('p',class_="body strikeout")
+# [<p class="body strikeout"></p>]
+```
+
+完全匹配class的值时，如果CSS类名的顺序与实际不符，将搜索不到结果：
+```
+soup.find_all('p',attrs={"class": "body strikeout"})
+# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
+#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
+#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
+```
+
+
+**string参数**
+
+通过string参数可以搜索文档中的字符串内容，与name参数的可选值一样，string参数接受字符串，正则表达式，列表，True：
+
+```
+soup.find_all(string="Elsie")
+# [u'Elsie']
+
+soup.find_all(string=["Tillie", "Elsie", "Lacie"])
+# [u'Elsie', u'Lacie', u'Tillie']
+
+soup.find_all(string=re.compile("Dormouse"))
+[u"The Dormouse's story", u"The Dormouse's story"]
+
+def st(s):
+	""Return True if this string is the only child of its parent tag""
+	return(s == s.parent.string)
+
+soup.find_all(string=st)
+# [u"The Dormouse's story", u"The Dormouse's story", u'Elsie', u'Lacie', u'Tillie', u'...']
+
+```
+
+虽然string参数用于搜索字符串，还可以与其他混合使用来过滤tag，BeautifulSoup会找到.string方法与string参数值相符的tag
+
+```
+soup.find_all('a',string='Elsie')
+# [<a href="http://example.com/elsie" class="sister" id="link1">Elsie</a>]
+
+```
+
+
+**limit参数**
+
+find_all()方法返回全部的搜索结果，如果文档树很大那么搜索会很慢，如果不需要全部结果，可以使用limit参数限制返回结果的数量，效果和SQL中的limit关键字类似，当搜索到的结果数量达到limit的限制时，就停止搜索返回结果：
+
+```
+soup.find_all('a',limit=2)
+# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
+#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>]
+```
+
+
+**recursive参数**
+
+调用tag的find_all()方法时，BeautifulSoup会检索当前tag的所有子孙节点，如果只想搜索tag的直接子节点，可以使用参数recursive=False
+
+```
+<html>
+ <head>
+  <title>
+   The Dormouse's story
+  </title>
+ </head>
+...
+```
+
+是否使用recursive参数的搜索结果
+
+```
+soup.html.find_all('title')
+# [<title>The Dormouse's story</title>]
+
+soup.html.find_all('title',recursive=False)
+# []
+
+```
+
+<title>标签在<html>标签下，但并不是直接子节点，<head>标签才是直接子节点，在允许查询所有后代节点时BeautifulSoup能够查找到<title>，但是使用了recursive=False参数之后，只能查找直接子节点，这样就查不到<title>标签了
+
+BeautifulSoup提供了多种DOM树搜索方法，这些方法都使用了类似的参数定义，比如这些方法：find_all():name,attrs,text,limit.但是只有find_all()和find()支持recursive参数u
+
+
+**像调用find_all()一样调用tag**
+
+BeautifulSoup对象和tag对象可以被当做一个方法来使用，这个方法的执行结果与调用这个对象的find_all()方法相同
+
+```
+soup.find_all('a')ZQ
+soup("a")
+
+soup.title.find_all(string=True)
+soup.title(string=True)
+
+```
+
+
+**find()**
+
+**find(name,attrs,recursive,string,\*\*kwargs)**
+
+文档中只有一个的标签，使用find_all()方法来查找不合适，使用limit=1参数不如直接使用find()方法：
+
+```
+soup.find_all("title",limit=1)
+
+soup.find("title")
+
+# <title>The Dormouse's story</title>
+
+```
+
+唯一区别是find_all()方法返回的值包含一个元素的列表，而find()方法直接返回结果
+
+find_all()方法没有找到目标是返回空列表，find()方法找不到目标，返回None
+
+soup.head.title是tag的名字方法的简写，这个简写的原理就是多次调用当前tag的find()方法：
+
+```
+soup.head.title
+
+soup.find("head").find("title")
+
+# <title>The Dormouse's story</title>
+```
+
+
+**find_parent和find_parents()**
+
+find_parent(name,attrs,recursive,string,\*\*kwargs)
+find_parents(name,attrs,recursive,string,\*\*kwargs)
+
+```
+st = soup.find(string="Lacie")
+
+st.find_parents("a")
+# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>]
+
+st.find_parent("p")
+# <p class="story">Once upon a time there were three little sisters; and their names were
+#  <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
+#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a> and
+#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>;
+#  and they lived at the bottom of a well.</p>
+
+```
+
+**注：在较新版本中，find/find_all中的string参数被替换为了text。**
+
+
+**find_next_siblings()和find_next_sibling()**
+
+**find_previous_siblings()和find_previous_sibling()**
+
+**find_all_next()和find_next()**
+
+这两个方法通过.next_elements属性对当前tag之后的tag和字符串进行迭代
+
+**find_all_previous()和find_previous()**
+
+
+**CSS选择器**
+
+BeautifulSoup支持大部分的CSS选择器，在Tag或Beautiful对象的.select()方法中传入字符串参数，即可使用CSS选择器的语法找到tag:
+
+```
+soup.select('title')
+# [<title>The Dormouse's story</title>]
+
+soup.select("p nth-of-type(3)")
+#[<p class="story">...</p>]
+```
+
+通过tag标签逐层查找：
+
+```
+soup.select("body a")
+# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
+#  <a class="sister" href="http://example.com/lacie"  id="link2">Lacie</a>,
+#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
+
+soup.select("html head title")
+# [<title>The Dormouse's story</title>]
+```
+
+找到某个tag标签下的直接子标签：
+
+```
+soup.select("head > title")
+# [<title>The Dormouse's story</title>]
+
+soup.select("p > a")
+# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
+#  <a class="sister" href="http://example.com/lacie"  id="link2">Lacie</a>,
+#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
+
+soup.select("p > a:nth-of-type(2)")
+# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>]
+
+soup.select("p > #link1")
+# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>]
+
+soup.select("body > a")
+# []
+
+```
+
+找到兄弟节点标签：
+
+```
+soup.select("#link1 ~ .sister")
+# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
+#  <a class="sister" href="http://example.com/tillie"  id="link3">Tillie</a>]
+
+soup.select('#link1 + .sister')
+# [<a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>]
+
+```
+
+
+通过CSS的类名查找：
+
+```
+soup.select(".sister")
+# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
+#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
+#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
+
+soup.select("[class~=sister]")
+# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
+#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
+#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
+
+```
+
+通过是否存在某个属性来查找：
+
+```
+soup.select('a[href]')
+# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
+#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
+#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
+```
+
+通过属性的值来查找：
+
+```
+soup.select('a[href="http://example.com"]')
+# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>,
+#  <a class="sister" href="http://example.com/lacie" id="link2">Lacie</a>,
+#  <a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
+
+soup.select('a[href$="titllie"]')
+# [<a class="sister" href="http://example.com/tillie" id="link3">Tillie</a>]
+
+soup.select('a[href*=".com/el"]')
+# [<a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>]
+```
+
+
+通过语言设置来查找：
+
+```
+markup ="""
+ <p lang="en">Hello</p>
+ <p lang="en-us">Howdy, y'all</p>
+ <p lang="en-gb">Pip-pip, old fruit</p>
+ <p lang="fr">Bonjour mes amis</p>
+"""
+soup = BeautifulSoup(markup)
+soup.select('p[lang|=en]')
+# [<p lang="en">Hello</p>,
+#  <p lang="en-us">Howdy, y'all</p>,
+#  <p lang="en-gb">Pip-pip, old fruit</p>]
+
+```
+
+返回查找到的元素的第一个：
+
+```
+soup.select_one(".sister")
+# <a class="sister" href="http://example.com/elsie" id="link1">Elsie</a>
+```
+
+
+## 修改文档树
+
+```
+soup = BeautifulSoup('<b class="boldest">Extremely blod</b>')
+tag = soup.b
+
+tag.name = "blockquote"
+tag['class'] = 'verybold'
+tag['id'] = 1
+tag
+# <blockquote class="verybold" id="1">Extremely bold</blockquote>
+
+del tag['class']
+del tag['id']
+tag
+# <blockquote>Extremely bold</blockquote>
+```
+
+**修改.string**
+
+给tag的.string属性赋值，就相当于用当前的内容替代了原来的内容
+
+```
+markup = '<a href="http://example.com/">I linked to <i>example.com</i></a>'
+soup = BeautifulSoup(markup)
+
+tag = soup.a
+tag.string = "New link text."
+tag
+# <a href="http://example.com/">New link text.</a>
+```
+
+如果当前的tag包含了其他tag，那么给它的.string属性赋值会覆盖掉所有内容包含子tag
+
+
+**append()**
+Tag.append()方法想tag中添加内容，就好像Python的列表.append()方法：
+
+```
+soup = BeautifulSoup("<a>Foo</a>")
+soup.a.append("Bar")
+
+soup
+# <html><head></head><body><a>FooBar</a></body></html>
+soup.a.contents
+# [u'Foo', u'Bar']
+```
+
+
+**NavigableString()和。new_tag()**
+
+如果想添加一段文本内容到文档中也没问题，可以调用Python的append()方法或调用NavigableString的构造方法：
+
+```
+soup = BeautifulSoup('<b></b>')
+tag = soup.b
+tag.append("hello")
+tag.contents
+# [u'hello']
+```
+
+如果想要创建一段注释，或NavigableString的任何子类，只要调用NavigableString的构造方法：
+
+```
+from bs4 import Comment
+new = soup.new_string("nice to see you",Comment)
+soup.b.append(new)
+soup.b
+# <b>Hello there<!--Nice to see you.--></b>
+
+soup.b.contents
+# [u'Hello', u' there', u'Nice to see you.']
+```
+
+创建一个tag最好的方法是调用工厂方法BeautifulSoup.new_tag():
+
+```
+soup = BeautifulSoup("<b></b>")
+tag = soup.b
+new = soup.new_tag('a',href="http://www.example.com")
+tag.append(new)
+tag
+# <b><a href="http://www.example.com"></a></b>
+
+new.string = "hello"
+# <b><a href="http://www.example.com">hello</a></b>
+
+```
+
+第一个参数作为tag的name是必填，其他参数可选
+
+
+**insert**
+
+Tag.insert()方法与Tag.append()方法类似，区别是不会把新元素添加到父节点.contents属性的最后，而是把元素插入到指定的位置：
+
+```
+markup = '<a href="http://example.com/">I linked to <i>example.com</i></a>'
+soup = BeautifulSoup(markup)
+tag = soup.a
+
+tag.insert(1, "but did not endorse ")
+tag
+# <a href="http://example.com/">I linked to but did not endorse <i>example.com</i></a>
+tag.contents
+# [u'I linked to ', u'but did not endorse', <i>example.com</i>]
+```
+
+
+**insert_before()和insert_after()**
+
+insert_before()方法在当前tag或文本节点前插入内容：
+
+
+**clear()**
+
+Tag.clear()方法移除当前tag的内容
+
+
+**extract()**
+
+PageElement.extract()方法将当前tag移除文档树，并作为方法结果返回：
+
+```
+markup = '<a href="http://example.com/">I linked to <i>example.com</i></a>'
+soup = BeautifulSoup(markup)
+a_tag = soup.a
+
+i_tag = soup.i.extract()
+
+a_tag
+# <a href="http://example.com/">I linked to</a>
+
+i_tag
+# <i>example.com</i>
+
+print(i_tag.parent)
+None
+```
+
+这个方法实际产生了2个文档树：一个是用来解析原始文档的BeautifulSoup对象，另一个是被移除并且返回的tag。被移除并返回的tag可以继续调用extract方法：
+
+```
+my_string = i_tag.string.extract()
+my_string
+# u'example.com'
+
+print(my_string.parent)
+# None
+i_tag
+# <i></i>
+```
+
+
+**decompose()**
+
+Tag.decompose()方法将当前节点移除文档树并完全销毁：
+
+```
+markup = '<a href="http://example.com/">I linked to <i>example.com</i></a>'
+soup = BeautifulSoup(markup)
+a_tag = soup.a
+
+soup.i.decompose()
+
+a_tag
+# <a href="http://example.com/">I linked to</a>
+```
+
+**replace_with()**
+
+PageElement.replace_with()方法移除文档树中的某段内容，并用新tag或文本节点替代它：
+
+```
+markup = '<a href="http://example.com/">I linked to <i>example.com</i></a>'
+soup = BeautifulSoup(markup)
+a_tag = soup.a
+
+new_tag = soup.new_tag("b")
+new_tag.string = "example.net"
+a_tag.i.replace_with(new_tag)
+
+a_tag
+# <a href="http://example.com/">I linked to <b>example.net</b></a>
+```
+
+replace_with()方法返回替代的tag或文本几点，可以用来浏览或添加到文档树其他地方。
+
+
+**wrap**
+
+PageElement.wrap()方法可以对指定的tag元素进行包装，并返回包装后的结果
+
+```
+soup = BeautifulSoup("<p>I wish I was bold.</p>")
+soup.p.string.wrap(soup.new_tag("b"))
+# <b>I wish I was bold.</b>
+
+soup.p.wrap(soup.new_tag("div"))
+# <div><p><b>I wish I was bold.</b></p></div>
+```
+
+
+**unwrap()**
+
+Tag.wrap()方法与wrap()方法相反，将移除tag内的所有tag标签，该方法常被用来进行标记的解包：
+
+```
+markup = '<a href="http://example.com/">I linked to <i>example.com</i></a>'
+soup = BeautifulSoup(markup)
+a_tag = soup.a
+
+a_tag.i.unwrap()
+a_tag
+# <a href="http://example.com/">I linked to example.com</a>
+```
+
+与replace_with()方法相同，unwrap()方法返回将被移除的tag
+
+
+## 输出
+
+格式化输出
+prettify()方法将BeautifulSoup的文档树格式化后以Unicode编码输出，每个XML/HTML标签独占一行
+
+```
+markup = '<a href="http://example.com/">I linked to <i>example.com</i></a>'
+soup = BeautifulSoup(markup)
+soup.prettify()
+# '<html>\n <head>\n </head>\n <body>\n  <a href="http://example.com/">\n...'
+
+print(soup.prettify())
+# <html>
+#  <head>
+#  </head>
+#  <body>
+#   <a href="http://example.com/">
+#    I linked to
+#    <i>
+#     example.com
+#    </i>
+#   </a>
+#  </body>
+# </html>
+```
+
+**压缩输出**
+
+如果只想得到结果字符串，不重视格式，可以对BeautifulSoup对象或tag对象使用Python的unicode()或str()方法：
+
+```
+str(soup)
+# '<html><head></head><body><a href="http://example.com/">I linked to <i>example.com</i></a></body></html>'
+
+unicode(soup.a)
+# u'<a href="http://example.com/">I linked to <i>example.com</i></a>'
+```
+
+str()方法返回UTF-8编码的字符串，可以指定编码的设置
+还可以调用encode()方法获取字节码或调用decode()方法获得Unicode
+
+
+**输出格式**
+
+BeautifulSoup输出是会将HTML中的特殊字符转换成Unicode，比如"&lquot;"
+
+```
+soup = BeautifulSoup("&ldquo;Dammit!&rdquo; he said.")
+unicode(soup)
+# u'<html><head></head><body>\u201cDammit!\u201d he said.</body></html>'
+```
+
+
+**get_text()**
+
+如果只想得到tag中包含的文本内容，那么可以调用get_text()方法，这个方法获取到tag中包含的所有文版内容包括子孙tag中的内容，并将结果作为Unicode字符串返回：
+
+```
+markup = '<a href="http://example.com/">\nI linked to <i>example.com</i>\n</a>'
+soup = BeautifulSoup(markup)
+
+soup.get_text()
+u'\nI linked to example.com\n'
+soup.i.get_text()
+u'example.com'
+```
+
+还可以通过参数指定tag的文本内容的分隔符：
+
+```
+# soup.get_text("|")
+u'\nI linked to |example.com|\n'
+```
+
+还可以去除获得文本内容的前后空白：
+
+```
+# soup.get_text("|", strip=True)
+u'I linked to|example.com'
+```
+
+或者使用.stripped_strings生成器，获得文本列表后手动处理列表：
+
+```
+[text for text in soup.stripped_strings]
+# [u'I linked to', u'example.com']
+```
+
+
+## 指定文档解析器
+
+如果想要解析HTML文档，只要用文档创建BeautifulSoup对象就可以了，BeautifulSoup会自动选择一个解析器来解析，但还可以通过参数指定使用哪种解析器来解析当前文档。
+BeautifulSoup第一个参数应该是要被解析的文档字符串或是文件句柄，第二个参数用来表示怎样解析文档，如果第二个参数为空，那么BeautifulSoup根据当前系统安装的库自动选择解析器，解析器的优先顺序：lxml,html5lib,python标准库。
+下面两种条件下解析器优先顺序会变化：
+
++ 要解析的文档是什么类型：目前支持，"html","xml","html5"
+
++ 指定使用哪种解析器：目前支持，"lxml","html5lib","html.parser"
+
+
+**解析器之间的区别**
+
+BeautifulSoup为不同的解析器提供了相同的接口，但解析器本身有区别的，同一篇文档被不同的解析器解析后可能会生成不同结构的树型文档：
+
+```
+BeautifulSoup("<a></p>", "lxml")
+# <html><body><a></a></body></html>
+
+BeautifulSoup("<a></p>", "html5lib")
+# <html><head></head><body><a><p></p></a></body></html>
+
+BeautifulSoup("<a></p>", "html.parser")
+# <a></a>
+```
+
+
+**编码**
+
+任何HTML或XML文档都有自己的编码方式，比如ASCII或UTF-8，但是使用BeautifulSoup解析后，文档都被转换成了Unicode：
+
+```
+markup = "<h1>Sacr\xc3\xa9 bleu!</h1>"
+soup = BeautifulSoup(markup)
+soup.h1
+# <h1>Sacré bleu!</h1>
+soup.h1.string
+# u'Sacr\xe9 bleu!'
+```
+
+BeautifulSoupp用了编码自动检测子库来识别当前文档编码并转换成Unicode编码，BeautifulSoup对象的.original_encodinig属性记录了自动识别编码的结果：
+
+```
+soup.original_encoding
+'utf-8'
+```
+
+设置编码参数来减少自动检查编码出错的概率并且提高文档解析速度，在创建BeautifulSoup对象的时候设置from_encoding参数：
+
+```
+soup = BeautifulSoup(markup, from_encoding="iso-8859-8")
+soup.h1
+<h1>םולש</h1>
+soup.original_encoding
+'iso8859-8'
+```
+
+通过exclude_encoding参数，可以排除错误编码
+
+```
+soup = BeautifulSoup(markup, exclude_encodings=["ISO-8859-7"])
+soup.h1
+<h1>םולש</h1>
+soup.original_encoding
+'WINDOWS-1255'
+```
+
+
+**输出编码**
+
+通过Beautifulsoup输出文档时，不管输入文档是什么编码，输出编码均为UTF-8编码，下面为输入文档时Latin-1编码：
+
+```
+markup = b'''
+<html>
+  <head>
+    <meta content="text/html; charset=ISO-Latin-1" http-equiv="Content-type" />
+  </head>
+  <body>
+    <p>Sacr\xe9 bleu!</p>
+  </body>
+</html>
+'''
+
+soup = BeautifulSoup(markup)
+print(soup.prettify())
+# <html>
+#  <head>
+#   <meta content="text/html; charset=utf-8" http-equiv="Content-type" />
+#  </head>
+#  <body>
+#   <p>
+#    Sacré bleu!
+#   </p>
+#  </body>
+# </html>
+```
+
+注意，输出文档中的<meta>标签的编码设置已经修改成了与输出编码一致的UTF-8。如果不想用UTF-8编码输出，可以将编码方式传入prettify()方法：
+
+```
+print(soup.prettify("latin-1"))
+# <html>
+#  <head>
+#   <meta content="text/html; charset=latin-1" http-equiv="Content-type" />
+# ...
+```
+
+还可以调用BeautifulSoup对象或任意节点的encode()方法，就像Python的字符串调用encode()方法一样：
+
+```
+soup.p.encode("latin-1")
+# '<p>Sacr\xe9 bleu!</p>'
+
+soup.p.encode("utf-8")
+# '<p>Sacr\xc3\xa9 bleu!</p>'
+```
+
+
+**UnicodeDammit
+UnicodeDammit是BS内置库，主要用来猜测文档编码
+
+```
+from bs4 import UnicodeDammit
+dammit = UnicodeDammit("Sacr\xc3\xa9 bleu!")
+print(dammit.unicode_markup)
+# Sacré bleu!
+dammit.original_encoding
+# 'utf-8'
+
+```
+
+如果Python中安装了charet或cchardet那么编码检测功能的准确率将大大提高，输入的字符越多检测结果越精确，将猜测的编码作为参数，这样将优先检测这些编码：
+
+```
+dammit = UnicodeDammit("Sacr\xe9 bleu!", ["latin-1", "iso-8859-1"])
+print(dammit.unicode_markup)
+# Sacré bleu!
+dammit.original_encoding
+# 'latin-1'
+```
+
+
+**只能引号**
+
+使用Unicode时，BeautifulSOup还会只能的把引号转换成HTML或XML中的特殊字符：
+
+```
+markup = b"<p>I just \x93love\x94 Microsoft Word\x92s smart quotes</p>"
+
+UnicodeDammit(markup, ["windows-1252"], smart_quotes_to="html").unicode_markup
+# u'<p>I just &ldquo;love&rdquo; Microsoft Word&rsquo;s smart quotes</p>'
+
+UnicodeDammit(markup, ["windows-1252"], smart_quotes_to="xml").unicode_markup
+# u'<p>I just &#x201C;love&#x201D; Microsoft Word&#x2019;s smart quotes</p>'
+```
+
+也可以把引号转换为ASCII码：
+
+```
+UnicodeDammit(markup, ["windows-1252"], smart_quotes_to="ascii").unicode_markup
+# u'<p>I just "love" Microsoft Word\'s smart quotes</p>'
+```
+
+默认情况下，BeautifulSoup把引号转换成Unicode
+
+
+**比较对象是否相同**
+
+两个NavigableString或Tag对象具有相同的HTML或XML结构时，BeautifulSoup就判断这两个对象相同
+
+```
+markup = "<p>I want <b>pizza</b> and more <b>pizza</b>!</p>"
+soup = BeautifulSoup(markup, 'html.parser')
+first_b, second_b = soup.find_all('b')
+print first_b == second_b
+# True
+
+print first_b.previous_element == second_b.previous_element
+# False
+```
+
+如果想判断两个对象是否严格的指向同一个对象可以通过is来判断
+
+```
+print first_b is second_b
+# False
+```
+
+
+**复制BeautifulSoup对象**
+
+copy.copy()方法可以复制任意tag或NavigableString对象
+
+```
+import copy
+p = copy.copy(soup.p)
+print p
+# <p>I want <b>pizza</b> and more <b>pizza</b>!</p>
+```
+
+复制后的对象与对象是相等的，但指向不同的内存地址
+
+```
+print soup.p == p_copy
+# True
+
+print soup.p is p_copy
+# False
+```
+
+
+## 解析部分文档
+
+SoupStrainer类可以定义文档的某段内容，这样搜索文档时就不必先解析整篇文档，只会解析在SoupStrainer中定义过的文档。创建一个SoupStrainer对象并作为parse_only参数给BeautifulSoup的构造方法即可
+
+**SoupStrainer**
+
+SoupStrainer类接受与典型搜索方法相同的参数：name,attrs,recursive,string,**kwarg
+
+```
+from bs4 import SoupStrainer
+
+only_a_tags = SoupStrainer("a")
+
+only_tags_with_id_link2 = SoupStrainer(id="link2")
+
+def is_short_string(string):
+    return len(string) < 10
+
+only_short_strings = SoupStrainer(string=is_short_string)
+
+print(BeautifulSoup(html_doc, "html.parser", parse_only=only_a_tags).prettify())
+# <a class="sister" href="http://example.com/elsie" id="link1">
+#  Elsie
+# </a>
+# <a class="sister" href="http://example.com/lacie" id="link2">
+#  Lacie
+# </a>
+# <a class="sister" href="http://example.com/tillie" id="link3">
+#  Tillie
+# </a>
+
+print(BeautifulSoup(html_doc, "html.parser", parse_only=only_tags_with_id_link2).prettify())
+# <a class="sister" href="http://example.com/lacie" id="link2">
+#  Lacie
+# </a>
+
+print(BeautifulSoup(html_doc, "html.parser", parse_only=only_short_strings).prettify())
+# Elsie
+# ,
+# Lacie
+# and
+# Tillie
+# ...
+#
+```
+
+还可以将SoupStrainer作为参数传入搜索文档树种提到的方法，这可能不是常用方法：
+
+```
+soup = BeautifulSoup(html_doc)
+soup.find_all(only_short_strings)
+# [u'\n\n', u'\n\n', u'Elsie', u',\n', u'Lacie', u' and\n', u'Tillie',
+#  u'\n\n', u'...', u'\n']
+```
+
+
+## 常见问题
+
+**代码诊断**
+
+如果想知道BeautifulSoup到底怎样处理一份文档，可以将文档传入diagnose()方法
+
+```
+from bs.diagnose import diagnose
+data = open('bad.html').read()
+diagnose(data)
+
+#  running on Beautiful Soup 4.2.0
+# Python version 2.7.3 (default, Aug  1 2012, 05:16:07)
+# I noticed that html5lib is not installed. Installing it may help.
+# Found lxml version 2.3.2.0
+#
+# Trying to parse your data with html.parser
+# Here's what html.parser did with the document:
+# ...
+```
+
+**文档解析错误**
+
+文档解析错误有两种，一种是崩溃，BeautifulSoup尝试解析一段文档结果抛出了异常，通常是HTMLParser.HTMLParseError，还有一种异常情况，是BeautifulSoup解析后的文档树看起来与原来的内容相差很多。
+
+最常见的解析错误是HTMLParser.HTMLParseError: malformed start tag和HTMLParser.HTMLParseError:bad end tag，这都是由Python内置的解析器引起的，解决方案是安装lxml或html5lib
+
+
+**版本错误**
+SyntaxError: Invalid syntax (异常位置在代码行: ROOT_TAG_NAME = u'[document]' ),因为Python2版本的代码没有经过迁移就在Python3中窒息感
+ImportError: No module named HTMLParser 因为在Python3中执行Python2版本的Beautiful Soup
+ImportError: No module named html.parser 因为在Python2中执行Python3版本的Beautiful Soup
+ImportError: No module named BeautifulSoup 因为在没有安装BeautifulSoup3库的Python环境下执行代码,或忘记了BeautifulSoup4的代码需要从 bs4 包中引入
+ImportError: No module named bs4 因为当前Python环境下还没有安装BeautifulSoup4
+
+
+**名称变化**
+
+renderContents -> encode_contents
+replaceWith -> replace_with
+replaceWithChildren -> unwrap
+findAll -> find_all
+findAllNext -> find_all_next
+findAllPrevious -> find_all_previous
+findNext -> find_next
+findNextSibling -> find_next_sibling
+findNextSiblings -> find_next_siblings
+findParent -> find_parent
+findParents -> find_parents
+findPrevious -> find_previous
+findPreviousSibling -> find_previous_sibling
+findPreviousSiblings -> find_previous_siblings
+nextSibling -> next_sibling
+previousSibling -> previous_sibling
+
+构造方法的参数部分也有名字变化：
+
+BeautifulSoup(parseOnlyThese=...) -> BeautifulSoup(parse_only=...)
+BeautifulSoup(fromEncoding=...) -> BeautifulSoup(from_encoding=...)
+
+为了适配Python3,修改了一个方法名:
+
+Tag.has_key() -> Tag.has_attr()
+修改了一个属性名,让它看起来更专业点:
+
+Tag.isSelfClosing -> Tag.is_empty_element
+修改了下面3个属性的名字,以免雨Python保留字冲突.这些变动不是向下兼容的,如果在BS3中使用了这些属性,那么在BS4中这些代码无法执行.
+
+UnicodeDammit.Unicode -> UnicodeDammit.Unicode_markup``
+Tag.next -> Tag.next_element
+Tag.previous -> Tag.previous_element
+
+
+**生成器**
+
+childGenerator() -> children
+nextGenerator() -> next_elements
+nextSiblingGenerator() -> next_siblings
+previousGenerator() -> previous_elements
+previousSiblingGenerator() -> previous_siblings
+recursiveChildGenerator() -> descendants
+parentGenerator() -> parents
+
+所以迁移到BS4版本时要替换这些代码:
+
+for parent in tag.parentGenerator():
+    ...
+替换为:
+
+for parent in tag.parents:
+    ...
+
+
+BS4中增加了2个新的生成器, .strings 和 stripped_strings . .strings 生成器返回NavigableString对象, .stripped_strings 方法返回去除前后空白的Python的string对象.
+
 
 
 
