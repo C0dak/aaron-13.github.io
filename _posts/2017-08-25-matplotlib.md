@@ -289,6 +289,7 @@ ax5 = subplot(gs2[:-1,-1])
 ax6 = subplot(gs2[-1,-1])
 ```
 
+
 调整gridspec布局的比例
 
 ```
@@ -298,3 +299,60 @@ ax2 = subplot(gs[1])
 ax3 = subplot(gs[2])
 ax4 = subplot(gs[3])
 ```
+
+**坐标轴**
+
+坐标轴和子图功能类似，不过它可以放在图像的任意位置，因此，如果希望在一幅图中绘制一个小图，就可以使用这个功能。
+
+```
+from pylab import *
+
+axes([0.1,0.1,.8,.8])
+xticks([]),yticks([])
+text(0.5,0.5,'axes([0.1,0.1,.8,.8])',fontsize="blue",ha="center",va="center",fontsize=24,alpha=.5)
+
+axes([0.2,0.2,.2,.2])
+xticks([]),yticks([])
+text(0.3,0.3,"axes([0.2,0.2,.2,.2])",ha="center",va="center",fontsize=16,alpha=.5)
+```
+
+
+**记号**
+
+Matplotlib里的记号系统里的各个细节都是可以由用户个性化配置的，可以用Tick Locators来指定在哪些位置放置记号，用Tick Formatters来调整记号的样式。主要和次要的记号可以以不同的方式呈现。默认情况下，每个次要的记号都是隐藏的，默认情况下的次要记号列表是空的--NullLocator。
+
+Tick Locators
+
+|类型|说明|
+|:--:|:--:|
+|NullLocator| no ticks|
+|IndexLocator| 1 4 7 10|
+|FixedLocator| 0 2 ... 8 9 10|
+|LinearLocator| 0.0 2.5 5.0 7.5 10.0|
+|MultipleLocator| 0 1 2 3 4 5 6 7 8 9 10 |
+|AutoLocator| 0 2 4 6 8 10|
+|LogLocator| 1 2 4 8 |
+
+这些Locators都是matplotlib.ticker.Locator的子类，可以据此定义自己的Locator。以日期为ticks特别复杂，因此matplotlib提供了matplotlib.dates来实现这一功能。
+
+
+图像颜色填充(fill_between)
+
+```
+from pylab import *
+
+X = np.linspace(-np.pi,np.pi,256,endpoint=True)
+Y = np.sin(X*2)
+plot(X,Y+1,color="blue",linewidth=2.5,linestyle="-")
+plot(X,Y-1,color="blue",linewidth=2.5,linestyle="-")
+fill_between(X,1,Y+1,color="blue") //在1和Y+1之间的X区域填充颜色
+// 大于-1的部分填充蓝色，小于-1的部分填充红色
+fill_between(X,-1,Y-1,where=Y-1>-1,color="blue")
+fill_between(X,-1,Y-1,where=Y-1<-1,color="red")
+xticks([])
+yticks([])
+
+show()
+```
+
+
