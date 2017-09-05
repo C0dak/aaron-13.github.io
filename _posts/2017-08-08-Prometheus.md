@@ -1127,7 +1127,8 @@ Pushgateway是Prometheus生态中一个重要工具，使用它的主要原因�
 + 编译，安装
 
 + 启动服务
-cat <<EOF | curl --data-binary @- http://pushgateway.example.org:9091/metrics/job/some_job/instance/some_instance
+cat <<EOF | curl --data-binary @- http://pushgateway.example.org:9091/metrics/job/some_job/instance/some_instance
+
 
 
 **Docker安装**

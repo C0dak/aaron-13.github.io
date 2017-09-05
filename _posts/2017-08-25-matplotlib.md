@@ -1,4 +1,4 @@
-# Matplotlib教程
+# Matplotlib教程  Part01
 
 ------
 
@@ -86,6 +86,37 @@ show()
 ```
 
 ![pylab-02.png](https://aaron-13.github.io/images/pylab-02.png)
+
+**关于plot线条的形态参数**
+
+1.plot(x,s,'-') #实线
+![numpy-13.png](https://aaron-13.github.io/images/numpy-13.png)
+
+2.plot(x,s,'--') #虚线
+![numpy-14.png](https://aaron-13.github.io/images/numpy-14.png)
+
+3.plot(x,s,'-.') #点划线
+![numpy-15.png](https://aaron-13.github.io/images/numpy-15.png)
+
+4.plot(x,s,':') #点线
+![numpy-16.png](https://aaron-13.github.io/images/numpy-16.png)
+
+5.plot(x,s,'.') #pointer marker
+![numpy-17.png](https://aaron-13.github.io/images/numpy-17.png)
+
+6.plot(x,s,',') #pixel marker像素线
+![numpy-18.png](https://aaron-13.github.io/images/numpy-18.png)
+
+7.plot(x,s,'o') #circle marker原点
+![numpy-19.png](https://aaron-13.github.io/images/numpy-19.png)
+
+8.plot(x,s,'v') #triangle_down marker倒三角
+'^' '<' '>' 分别表示对应方向的三角
+![numpy-20.png](https://aaron-13.github.io/images/numpy-20.png)
+
+9.plot(x,s,'*') #star marker
+![numpy-21.png](https://aaron-13.github.io/images/numpy-21.png)
+
 
 
 
@@ -356,3 +387,65 @@ show()
 ```
 
 
+
+**2D作图**
+
+```
+image = np.random.rand(30,30)
+plot.imshow(image,cmap=cm.hot)
+colorbar()
+show()
+```
+
+![numpy-22.png](https://aaron-13.github.io/images/numpy-22.png)
+
+
+**索引和切片**
+
+np.diag() 矩阵对角元素提取，只保留原矩阵的主对角线的元素，其余的元素以零取代
+a = np.diag(np.arange(3))
+
+array([[0,0,0,0],
+	[0,1,0,0],
+	[0,0,2,0],
+	[0,0,0,3]])
+
+a[::-1]表示逆序整个array
+
+np.arange(6) + np.arange(0,31,10)[,np.newaxis]
+
+![numpy-23.png](https://aaron-13.github.io/images/numpy-23.png)
+
+
+np.tile()平铺函数
+
+np.tile(A,reps)
+![numpy-24.png](https://aaron-13.github.io/images/numpy-24.png)
+
+
+**副本和视图**
+
+切片操作创建原数组的一个视图，这只是访问数组数据一种方式。因此，原始的数组并不是在内存中复制，可以使用np.may_share_memory()来确认两个数组是否共享相同的内存块。但这种方式使用启发式，可能产生漏报。
+
+当修改视图时，原始数据也被修改
+
+```
+a = np.arange(10)
+b = a[::2].copy() #强制复制
+np.may_share_memory(a,b)  ==> False
+```
+这样做节省了内存和时间
+
+
+实例: 用筛选法计算0-99之间的素数
++ 构建一个名为_prime形状是(100,)的布尔数组，在初始将值都设为True。
+
+is_prime = np.ones((100,),dtype=bool)
+// is_prime = np.array(np.arange(100),dtype=bool)
+
++ 将不属于素数的0,1去掉
+is_prime[:2] = 0
+
++ 对于从2开始的整数j化掉它的倍数
+
+n = 
