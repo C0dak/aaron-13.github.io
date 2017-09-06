@@ -20,3 +20,8 @@ lokkit -s http -s ssh
 curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.rpm.sh | sudo bash
 
 yum install gitlab-ce -y
+
+
+
+[sonar和jenkins集成](https://www.ibm.com/developerworks/cn/devops/1612_qusm_jenkins/index.html)
+
