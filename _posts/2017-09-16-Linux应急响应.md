@@ -16,5 +16,3 @@
 
 
 **默认的用户名: admin@example.com	密码: 5iveL!fe**
-
-
