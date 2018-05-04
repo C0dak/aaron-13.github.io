@@ -152,7 +152,7 @@ server {
 
 方法二：
 
-如要允许用户请求来自localhost，www.example.com或m.example.com的情趣访问xxx.example2.com域名时，返回头Access-Control-Allow-Origin
+如要允许用户请求来自localhost，www.example.com或m.example.com的请求访问xxx.example2.com域名时，返回头Access-Control-Allow-Origin
 
 在nginx配置文件中xxx.example2.com域名的location / 下配置：
 
@@ -185,17 +185,17 @@ if ($http_origin ~ http://(.*).example.com) {
 
     #CORS(Cross Orign Resource-Sharing)跨域控制配置
     #是否允许请求带有验证信息
-    add_essay-header Access-Control-Allow-Credentials true;
+    add_essay_header Access-Control-Allow-Credentials true;
     #允许跨域访问的域名,可以是一个域的列表，也可以是通配符*
-    add_essay-header Access-Control-Allow-Origin $allow_url;
+    add_essay_header Access-Control-Allow-Origin $allow_url;
     #允许脚本访问的返回头
-    add_essay-header Access-Control-Allow-Headers 'x-requested-with,content-type,Cache-Control,Pragma,Date,x-timestamp';
+    add_essay_header Access-Control-Allow-Headers 'x-requested-with,content-type,Cache-Control,Pragma,Date,x-timestamp';
     #允许使用的请求方法，以逗号隔开
-    add_essay-header Access-Control-Allow-Methods 'POST,GET,OPTIONS,PUT,DELETE';
+    add_essay_header Access-Control-Allow-Methods 'POST,GET,OPTIONS,PUT,DELETE';
     #允许自定义的头部，以逗号隔开,大小写不敏感
-    add_essay-header Access-Control-Expose-Headers 'WWW-Authenticate,Server-Authorization';
+    add_essay_header Access-Control-Expose-Headers 'WWW-Authenticate,Server-Authorization';
     #P3P支持跨域cookie操作
-    add_essay-header P3P 'policyref="/w3c/p3p.xml", CP="NOI DSP PSAa OUR BUS IND ONL UNI COM NAV INT LOC"';	
+    add_essay_header P3P 'policyref="/w3c/p3p.xml", CP="NOI DSP PSAa OUR BUS IND ONL UNI COM NAV INT LOC"';	
 }
 
 ```
